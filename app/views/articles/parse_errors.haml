@@ -1,5 +1,5 @@
 %h1 Fehler beim hochladen
-%p 
+%p
   = @new_counter
   wurden neu gespeichert,
   = @updated_counter
@@ -13,6 +13,6 @@
       = article.name
       %ul
         - article.errors.each do |attr, msg|
-          %li= attr + ": " + msg
- 
+          %li= "#{attr}: #{msg}"
+
 %p= link_to 'Artikel', supplier_articles_url(@supplier)

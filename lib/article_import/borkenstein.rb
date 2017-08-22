@@ -1,23 +1,29 @@
+# -*- coding: utf-8 -*-
 # Module for Borkenstein csv import
- 
+
 require 'csv'
 
-module Borkenstein
+module ArticleImport::Borkenstein
 
   REGEX = {
     :main => /^(.+)\s+\[([^\[\]]+)\]\s+(\d+\.\d+)\((\d+\.\d+)\)$/,
     :manufacturer => /^(.+)\s{4}\[\]\s{4}\(\)$/,
     :origin => /(.+)\s+(\w+)\/\w+[\/[\w\-]+]?/
-  }
+  }.freeze
   
-  # parses a string from a foodsoft-file
-  # returns two arrays with articles and outlisted_articles
-  # the parsed article is a simple hash
-  def self.parse(data)
-    articles, outlisted_articles = Array.new, Array.new
+  NAME = "Borkenstein (CSV)"
+  OUTLIST = false
+  OPTIONS = {
+    col_sep: ",",
+    encoding: "UTF-8" # @todo check this
+  }.freeze
+
+  def self.parse(file, **opts)
     global_manufacturer = nil
 
-    CSV.parse(data, {:col_sep => ",", :headers => false}) do |row|
+    file.set_encoding(opts[:encoding] || OPTIONS[:encoding])
+    col_sep = opts[:col_sep] || OPTIONS[:col_sep]
+    CSV.new(file, {col_sep: col_sep, :headers => false}).each do |row|
 
       # Set manufacturer
       if row[1] == "-"
@@ -33,7 +39,7 @@ module Borkenstein
 
         if matched.nil?
           puts "No regular article data for #{row[1]}: #{row[2]}"
-          
+
         else
 
           name, units, price_high, price_low = matched.captures
@@ -79,11 +85,10 @@ module Borkenstein
             raise "Fehler: Einheit, Preis und MwSt. müssen gegeben sein: #{article.inspect}"
           end
 
-          articles << article
+          yield article, nil
         end
       end
     end
-    return [articles, outlisted_articles]
   end
-    
+
 end

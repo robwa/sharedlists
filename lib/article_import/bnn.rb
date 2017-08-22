@@ -3,24 +3,27 @@ require 'csv'
 require 'yaml'
 
 # Module for translation and parsing of BNN-files (www.n-bnn.de)
-# 
-module BnnFile
-  
+#
+module ArticleImport::Bnn
+
  private
   @@codes = Hash.new
   @@midgard = Hash.new
-  
+
   # Loads the codes_file config/bnn_codes.yml into the class variable @@codes
   def self.load_codes
-    @@codes = YAML::load(File.open("#{Rails.root}/lib/bnn_codes.yml")).symbolize_keys
-    @@midgard = YAML::load(File.open("#{Rails.root}/lib/midgard_codes.yml")).symbolize_keys
-  rescue => e
-    raise "Failed to load bnn_codes: #{Rails.root}/libs/...yml: #{e.message}"
+    dir = Rails.root.join("lib", "article_import")
+    begin
+      @@codes = YAML::load(File.open(dir.join("bnn_codes.yml"))).symbolize_keys
+      @@midgard = YAML::load(File.open(dir.join("midgard_codes.yml"))).symbolize_keys
+    rescue => e
+      raise "Failed to load bnn_codes: #{dir}/{bnn,midgard}_codes.yml: #{e.message}"
+    end
   end
-  
+
  public
   $missing_bnn_codes = Array.new
-  
+
   # translates codes from BNN to foodsoft-code
   def self.translate(key, value)
     if @@codes[key][value]
@@ -33,12 +36,18 @@ module BnnFile
     end
   end
   
-  # parses a string from a bnn-file
-  # returns two arrays with articles and outlisted_articles
-  # the parsed article is a simple hash
-  def self.parse(data)
-    articles, outlisted_articles, specials = Array.new, Array.new, Array.new
-    CSV.parse(data, {:col_sep => ";", :headers => true}) do |row|
+  NAME = "BNN (CSV)"
+  OUTLIST = false
+  OPTIONS = {
+    encoding: "IBM850",
+    col_sep: ";"
+  }.freeze
+
+  # parses a bnn-file
+  def self.parse(file, **opts)
+    file.set_encoding(opts[:encoding] || OPTIONS[:encoding])
+    col_sep = opts[:col_sep] || OPTIONS[:col_sep]
+    CSV.new(file, {col_sep: col_sep, headers: true}).each do |row|
       # check if the line is empty
       unless row[0] == "" || row[0].nil?
         article = {
@@ -62,22 +71,20 @@ module BnnFile
         if row[62] != nil
           # consider special prices
           article[:note] = "Sonderpreis: #{article[:price]} von #{row[62]} bis #{row[63]}"
-          specials << article
+          yield article, :special
 
           # Check now for article status, we only consider outlisted articles right now
           # N=neu, A=Änderung, X=ausgelistet, R=Restbestand,
           # V=vorübergehend ausgelistet, W=wiedergelistet
         elsif row[1] == "X" || row[1] == "V"
-          # check if the article is outlisted
-          outlisted_articles << article
+          yield article, :outlisted
         else
-          articles << article
+          yield article, nil
         end
       end
     end
-    return [articles, outlisted_articles, specials]
   end
 end
 
 # Automatically load codes:
-BnnFile::load_codes
+ArticleImport::Bnn.load_codes

@@ -3,7 +3,7 @@
 class ArticlesController < ApplicationController
 
   before_filter :authenticate_supplier_admin!
-               
+
   # GET /supplier/:id/articles
   # GET /supplier/:id/articles.xml
   def index
@@ -19,7 +19,7 @@ class ArticlesController < ApplicationController
     else
       @articles = @supplier.articles.paginate :page => params[:page]
     end
-    
+
     respond_to do |format|
       format.html # index.haml
       format.xml  { render :xml => @articles.to_xml }
@@ -90,39 +90,56 @@ class ArticlesController < ApplicationController
       format.xml  { head :ok }
     end
   end
-  
+
   # Renders the upload form
   def upload
   end
 
-  # parse the file to load articles  
+  # parse the file to load articles
   # checks if the article should be updated, create or destroyed
   def parse
-    Article.transaction do
-      Article.delete_all :supplier_id => @supplier.id unless params[:delete_existing].blank?
-
-      @outlisted_counter, @new_counter, @updated_counter, @invalid_articles =
-          @supplier.update_articles_from_file(params[:articles]["file"].read, params[:type], params[:character_set])
-
-      if @invalid_articles.empty?
-        flash[:notice] = "Hochladen erfolgreich: #{@new_counter} neue, #{@updated_counter} aktualisiert und #{@outlisted_counter} ausgelistet."
-        redirect_to supplier_articles_url(@supplier)
-      else
-        flash[:error] = "#{@invalid_articles.size} Artikel konnte(n) nicht gespeichert werden"
-        render :template => 'articles/parse_errors'
-      end
+    if params[:articles].blank?
+      flash[:error] = "Please select a file to import"
+      redirect_to upload_supplier_articles_url(@supplier)
+      return
     end
-  rescue => error
-    flash[:error] = "Fehler beim hochladen der Artikel: #{error.message}"
-    redirect_to upload_supplier_articles_url(@supplier)
+    if params[:type].blank?
+      flash[:error] = "Please select a file-format"
+      redirect_to upload_supplier_articles_url(@supplier)
+      return
+    end
+
+    file = params[:articles]["file"].tempfile
+    filename = params[:articles]["file"].original_filename
+    type = params[:type].presence
+    encoding = params[:encoding].presence
+
+    begin
+      Article.transaction do
+        Article.delete_all :supplier_id => @supplier.id unless params[:delete_existing].blank?
+
+        @outlisted_counter, @new_counter, @updated_counter, @invalid_articles =
+            @supplier.update_articles_from_file(file, type: type, encoding: encoding, filename: filename)
+
+        if @invalid_articles.empty?
+          flash[:notice] = "Hochladen erfolgreich: #{@new_counter} neue, #{@updated_counter} aktualisiert und #{@outlisted_counter} ausgelistet."
+          redirect_to supplier_articles_url(@supplier)
+        else
+          flash[:error] = "#{@invalid_articles.size} Artikel konnte(n) nicht gespeichert werden"
+          render :template => 'articles/parse_errors'
+        end
+      end
+    rescue => error
+      flash[:error] = "Fehler beim hochladen der Artikel: #{error.message}"
+      redirect_to upload_supplier_articles_url(@supplier)
+    end
   end
-  
-  
+
   # deletes all articles of a supplier
   def destroy_all
-    Article.delete_all :supplier_id => @supplier.id
+    Article.where(supplier_id: @supplier.id).delete_all
     flash[:notice] = "Alle Artikel wurden gelöscht"
     redirect_to supplier_articles_url(@supplier)
   end
-  
+
 end
