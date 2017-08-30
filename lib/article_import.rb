@@ -17,6 +17,8 @@ module ArticleImport
       'bnn' => ArticleImport::Bnn,
       'borkenstein' => ArticleImport::Borkenstein,
       'foodsoft' => ArticleImport::Foodsoft,
+      'dnb_xml' => ArticleImport::DnbXml,
+      'bioromeo' => ArticleImport::Bioromeo,
     }.freeze
   end
 
