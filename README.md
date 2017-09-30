@@ -1,8 +1,11 @@
 # Sharedlists
 
+[![Dependency Status](https://gemnasium.com/badges/github.com/foodcoops/sharedlists.svg)](https://gemnasium.com/github.com/foodcoops/sharedlists)
+[![Docker Status](https://img.shields.io/docker/build/foodcoopsnet/sharedlists.svg)](https://hub.docker.com/r/foodcoopsnet/sharedlists)
+
 Sharedlists is a simple rails driven database for managing multiple product lists of various suppliers.
 
-This app is used in conjunction with the [foodsoft](https://github.com/foodcoops/foodsoft).
+This app is used in conjunction with [foodsoft](https://github.com/foodcoops/foodsoft).
 
 ## Setup
 
@@ -17,8 +20,10 @@ Copy `config/database.yml.SAMPLE` to `config/database.yml` and
 
 ## Production
 
-First build the image.
+Either fetch the image, or build it:
 
+    docker pull sharedlists:latest
+    # or
     docker build --tag sharedlists:latest --rm .
 
 Then set environment variables `SECRET_TOKEN` and `DATABASE_URL` and run:
