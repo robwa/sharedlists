@@ -1,7 +1,7 @@
 # Sharedlists
 
 [![Dependency Status](https://gemnasium.com/badges/github.com/foodcoops/sharedlists.svg)](https://gemnasium.com/github.com/foodcoops/sharedlists)
-[![Docker Status](https://img.shields.io/docker/build/foodcoopsnet/sharedlists.svg)](https://hub.docker.com/r/foodcoopsnet/sharedlists)
+[![Docker Status](https://img.shields.io/docker/build/foodcoops/sharedlists.svg)](https://hub.docker.com/r/foodcoops/sharedlists)
 
 Sharedlists is a simple rails driven database for managing multiple product lists of various suppliers.
 
