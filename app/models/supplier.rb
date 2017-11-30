@@ -71,7 +71,7 @@ class Supplier < ActiveRecord::Base
         article.destroy && outlisted_counter += 1
 
       # remember special info for article; store data to allow article after its special
-      elsif status == :special
+      elsif status == :special and article
         specials << article
 
       # mention parsing problems
